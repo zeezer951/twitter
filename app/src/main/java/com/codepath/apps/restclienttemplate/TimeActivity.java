@@ -3,6 +3,7 @@ import com.codepath.apps.restclienttemplate.models.Tweet;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.os.Bundle;
 
@@ -26,7 +27,7 @@ public class TimeActivity extends AppCompatActivity {
     RecyclerView rvTweets;
     List<Tweet> tweets;
     TweetsAdapter adapter;
-
+    SwipeRefreshLayout SwipeContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +35,21 @@ public class TimeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_time);
 
         client = TwitterApp.getRestClient(this);
+        SwipeContainer =findViewById(R.id.SwipeContainer);
+
+        SwipeContainer.setColorSchemeResources(android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
+
+        SwipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                Log.i(TAG, "Fetching new Data!");
+                populateHomeTimeline();
+            }
+        });
 
         rvTweets = findViewById(R.id.rvTweets);
         adapter = new TweetsAdapter(this, tweets);
@@ -51,8 +67,9 @@ public class TimeActivity extends AppCompatActivity {
             Log.i(TAG, "OnSuccess" + json.toString());
                 JSONArray jsonArray = json.jsonArray;
                 try {
-                    tweets.addAll(Tweet.fromJsonArray(jsonArray));
-                    adapter.notifyDataSetChanged();
+                    adapter.clear();
+                    adapter.addAll(Tweet.fromJsonArray(jsonArray));
+                    SwipeContainer.setRefreshing(false);
                 } catch (JSONException e) {
                     Log.e(TAG,"Json exception", e);
                     e.printStackTrace();
